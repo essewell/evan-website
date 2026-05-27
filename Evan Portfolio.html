@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Evan Friesen — UGC Creator</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Grotesk:wght@300;400;500;600&family=Bebas+Neue&family=Plus+Jakarta+Sans:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script async src="//www.instagram.com/embed.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:             #0e0c0a;
+      --fg:             #f0ede7;
+      --accent:         oklch(72% 0.13 72);
+      --nav-bg:         rgba(14, 12, 10, 0.88);
+      --surface:        rgba(240, 237, 231, 0.05);
+      --surface-border: rgba(240, 237, 231, 0.1);
+      --muted:          rgba(240, 237, 231, 0.38);
+      --display-font:   "Cormorant Garamond", serif;
+      --body-font:      "Space Grotesk", sans-serif;
+      --hero-name-style: normal;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--body-font);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      transition: background 0.55s ease, color 0.55s ease;
+    }
+
+    /* ── Custom cursor ── */
+    body, a, button { cursor: none !important; }
+    #cursor-dot {
+      position: fixed; top: 0; left: 0; z-index: 9999;
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--accent);
+      pointer-events: none;
+      transition: width 0.18s ease, height 0.18s ease,
+                  background 0.18s ease, border 0.18s ease,
+                  margin 0.18s ease;
+      will-change: transform;
+    }
+    #cursor-dot.hover {
+      width: 28px; height: 28px;
+      background: transparent;
+      border: 1px solid var(--accent);
+      margin: -10px 0 0 -10px;
+    }
+
+    /* ── Footer ── */
+    .site-footer {
+      width: 100%; padding: 1.25rem 2.5rem;
+      display: flex; align-items: center; justify-content: space-between;
+      border-top: 1px solid var(--surface-border);
+      gap: 1rem;
+    }
+    .site-footer span, .site-footer a {
+      font-size: 0.5rem; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--muted);
+      text-decoration: none; transition: color 0.2s;
+    }
+    .site-footer a:hover { color: var(--fg); }
+    ::selection { background: var(--accent); color: var(--bg); }
+
+    /* ── Nav live dot ── */
+    .nav-live-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--accent); flex-shrink: 0;
+      animation: recPulse 2.8s ease-in-out infinite;
+    }
+    .grain {
+      position: fixed; inset: 0; z-index: 9998;
+      pointer-events: none; opacity: 0.038;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 200px 200px;
+    }
+
+    /* ── Keyframe animations ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes staggerIn {
+      from { opacity: 0; transform: translateX(-10px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes recPulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.15; }
+    }
+    @keyframes ticker {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    /* ── Camera UI: viewfinder corners via CSS ── */
+    .vf-wrap {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none; overflow: hidden;
+    }
+    .vf-corner {
+      position: absolute;
+      width: 20px; height: 20px;
+    }
+    .vf-corner::before,
+    .vf-corner::after {
+      content: '';
+      position: absolute;
+      background: var(--fg);
+    }
+    .vf-corner::before { width: 100%; height: 1px; top: 0; left: 0; }
+    .vf-corner::after  { width: 1px; height: 100%; top: 0; left: 0; }
+    .vf-tl { top: 88px; left: 28px; opacity: 0.18; }
+    .vf-tr { top: 88px; right: 28px; opacity: 0.18; transform: scaleX(-1); }
+    .vf-bl { bottom: 28px; left: 28px; opacity: 0.18; transform: scaleY(-1); }
+    .vf-br { bottom: 28px; right: 28px; opacity: 0.18; transform: scale(-1,-1); }
+
+    .rec-badge {
+      position: absolute; top: 96px; right: 52px;
+      display: flex; align-items: center; gap: 6px;
+      pointer-events: none;
+    }
+    .rec-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--accent);
+      animation: recPulse 2.2s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    .rec-label {
+      font-size: 0.48rem; letter-spacing: 0.24em;
+      text-transform: uppercase; color: var(--fg);
+    }
+
+    .cam-ticker-wrap {
+      position: absolute; bottom: 24px; left: 52px; right: 52px;
+      overflow: hidden; pointer-events: none;
+    }
+    .cam-ticker {
+      display: inline-block; white-space: nowrap;
+      animation: ticker 28s linear infinite;
+      font-size: 0.48rem; letter-spacing: 0.2em;
+      text-transform: uppercase; color: var(--fg);
+    }
+
+    /* ── Instagram embed resets ── */
+    .instagram-media {
+      margin: 0 auto !important;
+      min-width: unset !important;
+      max-width: 100% !important;
+      border-radius: 4px !important;
+    }
+
+    /* ── Responsive: tablet / mobile ── */
+    @media (max-width: 860px) {
+      .nav-tabs-desktop  { display: none !important; }
+      .nav-ham           { display: block !important; }
+      .nav-cta-btn       { display: none !important; }
+      .hero-grid         { display: flex !important; flex-direction: column !important; }
+      .hero-photo-col    { display: none !important; }
+      .hero-mobile-photo { display: block !important; }
+      .hero-text-col     {
+        padding: 2.5rem 1.75rem 4rem !important;
+        justify-content: flex-start !important;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .hero-cta-group { flex-direction: column; }
+      .hero-cta-group button { width: 100%; text-align: center; }
+    }
+  </style>
+</head>
+<body style="background: rgb(149, 149, 153)">
+
+<div id="root"></div>
+<div id="cursor-dot"></div>
+
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="Nav.jsx"></script>
+<script type="text/babel" src="LinksPage.jsx"></script>
+<script type="text/babel" src="PortfolioPage.jsx"></script>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+/* ── Theme definitions ── */
+const THEMES = {
+  editorial: {
+    bg:            '#0e0c0a',
+    fg:            '#f0ede7',
+    accent:        'oklch(72% 0.13 72)',
+    navBg:         'rgba(14,12,10,0.88)',
+    surface:       'rgba(240,237,231,0.05)',
+    surfaceBorder: 'rgba(240,237,231,0.1)',
+    muted:         'rgba(240,237,231,0.38)',
+    displayFont:   '"Cormorant Garamond", serif',
+    bodyFont:      '"Space Grotesk", sans-serif',
+    heroNameStyle: 'normal',
+  },
+  graphic: {
+    bg:            '#08080c',
+    fg:            '#f0f0f5',
+    accent:        'oklch(70% 0.15 228)',
+    navBg:         'rgba(8,8,12,0.9)',
+    surface:       'rgba(240,240,245,0.05)',
+    surfaceBorder: 'rgba(240,240,245,0.1)',
+    muted:         'rgba(240,240,245,0.38)',
+    displayFont:   '"Bebas Neue", sans-serif',
+    bodyFont:      '"Plus Jakarta Sans", sans-serif',
+    heroNameStyle: 'normal',
+  },
+  warm: {
+    bg:            '#f4f0e8',
+    fg:            '#1a1714',
+    accent:        'oklch(52% 0.14 55)',
+    navBg:         'rgba(244,240,232,0.92)',
+    surface:       'rgba(26,23,20,0.04)',
+    surfaceBorder: 'rgba(26,23,20,0.1)',
+    muted:         'rgba(26,23,20,0.4)',
+    displayFont:   '"Playfair Display", serif',
+    bodyFont:      '"Outfit", sans-serif',
+    heroNameStyle: 'italic',
+  },
+};
+
+/* ── Persisted tweak defaults ── */
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "direction": "graphic",
+  "showGrain": true
+}/*EDITMODE-END*/;
+
+function Footer() {
+  return (
+    <footer className="site-footer" style={{ fontFamily: 'var(--body-font)' }}>
+      <span>© 2025 Evan Friesen</span>
+      <a href="mailto:hello@evanfriesen.com">hello@evanfriesen.com</a>
+    </footer>
+  );
+}
+
+function App() {
+  const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const [activeTab,  setActiveTab]  = useState('links');
+  const [linkState,  setLinkState]  = useState('home');
+
+  const theme = THEMES[tweaks.direction] || THEMES.editorial;
+
+  /* Push theme tokens to CSS custom properties */
+  useEffect(() => {
+    const r = document.documentElement;
+    const props = {
+      '--bg':             theme.bg,
+      '--fg':             theme.fg,
+      '--accent':         theme.accent,
+      '--nav-bg':         theme.navBg,
+      '--surface':        theme.surface,
+      '--surface-border': theme.surfaceBorder,
+      '--muted':          theme.muted,
+      '--display-font':   theme.displayFont,
+      '--body-font':      theme.bodyFont,
+      '--hero-name-style':theme.heroNameStyle,
+    };
+    Object.entries(props).forEach(([k, v]) => r.style.setProperty(k, v));
+    document.body.style.background = theme.bg;
+    document.body.style.color = theme.fg;
+    document.body.style.fontFamily = theme.bodyFont;
+  }, [tweaks.direction]);
+
+  /* Custom cursor */
+  useEffect(() => {
+    const dot = document.getElementById('cursor-dot');
+    if (!dot) return;
+    let cx = -100, cy = -100;
+    const onMove = (e) => {
+      cx = e.clientX; cy = e.clientY;
+      dot.style.transform = `translate(${cx - 3}px, ${cy - 3}px)`;
+    };
+    const onOver = (e) => {
+      if (e.target.closest('a, button')) dot.classList.add('hover');
+    };
+    const onOut = (e) => {
+      if (e.target.closest('a, button')) dot.classList.remove('hover');
+    };
+    window.addEventListener('mousemove', onMove, { passive: true });
+    document.addEventListener('mouseover', onOver);
+    document.addEventListener('mouseout', onOut);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseover', onOver);
+      document.removeEventListener('mouseout', onOut);
+    };
+  }, []);
+
+  return (
+    <div style={{
+      minHeight: '100dvh',
+      background: 'var(--bg)',
+      color: 'var(--fg)',
+      fontFamily: 'var(--body-font)',
+    }}>
+      {tweaks.showGrain && <div className="grain" />}
+
+      <EvanNav
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        setLinkState={setLinkState}
+      />
+
+      {activeTab === 'links'
+        ? <LinksPage linkState={linkState} setLinkState={setLinkState} />
+        : <PortfolioPage />
+      }
+
+      <Footer />
+
+      <TweaksPanel title="Directions">
+        <TweakSection label="Visual Direction" />
+        <TweakRadio
+          label="Theme"
+          value={tweaks.direction}
+          options={['editorial', 'graphic', 'warm']}
+          onChange={v => setTweak('direction', v)}
+        />
+        <TweakSection label="Effects" />
+        <TweakToggle
+          label="Film Grain"
+          value={tweaks.showGrain}
+          onChange={v => setTweak('showGrain', v)}
+        />
+      </TweaksPanel>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+
+</body>
+</html>
